@@ -158,7 +158,7 @@ async function syncWithServer() {
 
         if (el.syncBadge) {
           el.syncBadge.className = 'sync-badge';
-          el.syncBadge.textContent = '☁️ 自动同步';
+          el.syncBadge.innerHTML = '<span class="sync-dot"></span><span class="sync-text">自动同步</span>';
           el.syncBadge.title = '已连接到本地共享服务 (127.0.0.1:49152)，所有 Chrome Profile 自动实时互通';
         }
         return true;
@@ -167,7 +167,7 @@ async function syncWithServer() {
   } catch (err) {
     if (el.syncBadge) {
       el.syncBadge.className = 'sync-badge offline';
-      el.syncBadge.textContent = '💻 本地模式';
+      el.syncBadge.innerHTML = '<span class="sync-dot"></span><span class="sync-text">本地模式</span>';
       el.syncBadge.title = '未连接到共享服务，当前使用 Profile 独立存储';
     }
   }
@@ -212,7 +212,7 @@ async function saveData() {
     await chrome.storage.local.set({ [STORAGE_KEY]: appData });
   } catch (err) {
     console.error('Error saving data:', err);
-    showToast('❌ 保存配置失败: ' + err.message);
+    showToast('保存配置失败: ' + err.message);
   }
 
   // Auto push to background server for cross-profile sharing
@@ -350,7 +350,7 @@ function updateActiveBadge() {
 
   if (activeProfile) {
     el.activeBadge.className = 'status-badge status-badge-active';
-    el.activeBadge.textContent = '🟢 ' + activeProfile.name;
+    el.activeBadge.textContent = activeProfile.name;
     el.activeBadge.title = `当前活跃账号: ${activeProfile.name}`;
   } else {
     el.activeBadge.className = 'status-badge status-badge-idle';
@@ -398,7 +398,7 @@ function setupEventListeners() {
   el.btnReloadTab.addEventListener('click', () => {
     if (currentTab && currentTab.id) {
       chrome.tabs.reload(currentTab.id);
-      showToast('🔄 已重新加载页面');
+      showToast('已重新加载页面');
     }
   });
 
@@ -700,11 +700,11 @@ async function restoreStorage(tabId, storageData) {
  */
 async function switchProfile(profile) {
   if (!currentSiteValid || !currentTab) {
-    showToast('❌ 当前页面无法操作');
+    showToast('当前页面无法操作');
     return;
   }
 
-  showToast('⏳ 正在切换账号，请稍候...', 3000);
+  showToast('正在切换账号，请稍候...', 3000);
 
   // 1. Wipe current credentials for current tab and target profile domain
   await clearDomainSession(currentUrl, currentDomain, currentTab.id);
@@ -739,7 +739,7 @@ async function switchProfile(profile) {
 
   updateActiveBadge();
   renderCurrentSiteProfiles();
-  showToast(`✅ 已成功切换至「${profile.name}」并刷新页面`);
+  showToast(`已成功切换至「${profile.name}」并刷新页面`);
 }
 
 // ==========================================
@@ -748,7 +748,7 @@ async function switchProfile(profile) {
 
 async function handleOpenSaveModal() {
   if (!currentSiteValid) {
-    showToast('⚠️ 当前页面不受支持');
+    showToast('当前页面不受支持');
     return;
   }
 
@@ -790,7 +790,7 @@ async function handleConfirmSaveOrEdit() {
 
   if (!name) {
     el.inputProfileName.focus();
-    showToast('⚠️ 请输入账号备注名称');
+    showToast('请输入账号备注名称');
     return;
   }
 
@@ -803,12 +803,12 @@ async function handleConfirmSaveOrEdit() {
       prof.note = note;
       prof.updatedAt = Date.now();
       await saveData();
-      showToast(`✅ 已更新账号名称为「${name}」`);
+      showToast(`已更新账号名称为「${name}」`);
     }
   } else {
     // Saving new profile
     if (!capturedBuffer) {
-      showToast('❌ 未能读取会话凭证，请重试');
+      showToast('未能读取会话凭证，请重试');
       return;
     }
 
@@ -838,7 +838,7 @@ async function handleConfirmSaveOrEdit() {
     if (el.onboardingBanner) {
       el.onboardingBanner.classList.add('hidden');
     }
-    showToast(`✅ 账号「${name}」已保存成功！`);
+    showToast(`账号「${name}」已保存成功`);
   }
 
   closeModal();
@@ -873,9 +873,9 @@ async function handleOverwriteProfile(profile) {
         await saveData();
         updateActiveBadge();
         renderCurrentSiteProfiles();
-        showToast(`✅ 已成功将最新凭证覆盖至「${profile.name}」`);
+        showToast(`已成功将最新凭证覆盖至「${profile.name}」`);
       } catch (err) {
-        showToast('❌ 覆盖保存失败: ' + err.message);
+        showToast('覆盖保存失败: ' + err.message);
       }
     }
   );
@@ -896,7 +896,7 @@ function handleDeleteProfile(profile) {
       await saveData();
       updateActiveBadge();
       renderCurrentSiteProfiles();
-      showToast(`🗑️ 已删除账号「${profile.name}」`);
+      showToast(`已删除账号「${profile.name}」`);
     }
   );
 }
@@ -907,7 +907,7 @@ function handlePrepareAddNextAccount() {
     '清空并准备录入新账号',
     `将彻底清空「${currentDomain}」当前的登录状态（包括 Cookie、LocalStorage 及关联统一认证票据）并自动刷新网页。\n\n网页刷新后，请在网页中直接登录您的下一个账号；登录成功后，再次打开本插件点击「保存当前账号」即可录入。确定继续？`,
     async () => {
-      showToast('⏳ 正在清空当前会话并刷新网页...', 2000);
+      showToast('正在清空当前会话并刷新网页...', 2000);
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       const tabToUse = (tabs && tabs[0]) ? tabs[0] : currentTab;
       const tabId = tabToUse ? tabToUse.id : null;
@@ -932,7 +932,7 @@ function handlePrepareAddNextAccount() {
       if (el.onboardingBanner) {
         el.onboardingBanner.classList.remove('hidden');
       }
-      showToast('✨ 已清空登录！请在网页中登录新账号后点击「保存当前账号」', 4000);
+      showToast('已清空当前登录。请在网页中登录新账号后点击「保存当前账号」', 4000);
     }
   );
 }
@@ -967,7 +967,7 @@ function handleClearSessionConfirm() {
       if (el.onboardingBanner) {
         el.onboardingBanner.classList.add('hidden');
       }
-      showToast('🧹 已深度清空登录凭据并刷新页面');
+      showToast('已深度清空登录凭据并刷新页面');
     }
   );
 }
@@ -982,7 +982,7 @@ function handleExportSingleProfile(profile) {
   };
   const cleanName = profile.name.replace(/[/\\?%*:|"<>]/g, '_');
   downloadJson(`session_${currentDomain}_${cleanName}.json`, exportData);
-  showToast(`📤 已导出「${profile.name}」凭证`);
+  showToast(`已导出「${profile.name}」凭证`);
 }
 
 // ==========================================
@@ -1034,7 +1034,7 @@ function renderCurrentSiteProfiles() {
           ` : ''}
           ${profile.isAffiliated ? `
             <span class="affiliated-tag" title="此账号是在关联系统 ${escapeHtml(profile.sourceDomain)} 中保存的，可直接在此处一键切换">
-              🔗 ${escapeHtml(profile.sourceDomain)}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 3px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>${escapeHtml(profile.sourceDomain)}
             </span>
           ` : ''}
         </div>
@@ -1042,14 +1042,14 @@ function renderCurrentSiteProfiles() {
       ${profile.note ? `<div class="profile-note" title="${escapeHtml(profile.note)}">${escapeHtml(profile.note)}</div>` : ''}
       <div class="profile-meta-row">
         <div class="profile-badges">
-          <span class="pill-badge">🍪 ${cookieNum} Cookies</span>
-          <span class="pill-badge">💾 ${storageTotal} Storage</span>
+          <span class="pill-badge">${cookieNum} Cookies</span>
+          <span class="pill-badge">${storageTotal} Storage</span>
         </div>
         <span class="profile-time">${timeFormatted}</span>
       </div>
       <div class="profile-actions">
         <button class="btn-switch ${isActive ? 'current-applied' : ''}" data-action="switch">
-          ${isActive ? '✓ 当前账号' : '⚡ 切换至此账号'}
+          ${isActive ? '当前账号' : '切换至此账号'}
         </button>
         <button class="btn-sub-action" data-action="overwrite" title="用当前页面最新状态覆盖更新此账号">更新</button>
         <button class="btn-sub-action" data-action="edit" title="重命名备注">重命名</button>
@@ -1113,7 +1113,7 @@ function renderAllSitesList(query = '') {
     group.innerHTML = `
       <div class="site-group-header">
         <div class="site-group-title">
-          <span>🌐</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           <span>${escapeHtml(domain)}</span>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1151,7 +1151,7 @@ function renderAllSitesList(query = '') {
             updateActiveBadge();
             renderCurrentSiteProfiles();
           }
-          showToast(`🗑️ 已清空「${domain}」的所有账号`);
+          showToast(`已清空「${domain}」的所有账号`);
         }
       );
     });
@@ -1172,7 +1172,7 @@ function handleExportAll() {
   }
 
   if (totalProfiles === 0) {
-    showToast('⚠️ 暂无任何保存的账号可导出');
+    showToast('暂无任何保存的账号可导出');
     return;
   }
 
@@ -1188,7 +1188,7 @@ function handleExportAll() {
   const d = new Date();
   const dateStr = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}_${String(d.getHours()).padStart(2,'0')}${String(d.getMinutes()).padStart(2,'0')}`;
   downloadJson(`SessionSwitch_backup_${dateStr}.json`, exportPayload);
-  showToast(`📤 已成功导出 ${totalSites} 个站点共 ${totalProfiles} 个账号备份！`);
+  showToast(`已成功导出 ${totalSites} 个站点共 ${totalProfiles} 个账号备份`);
 }
 
 async function handleFileImport(e) {
@@ -1242,10 +1242,10 @@ async function handleFileImport(e) {
     updateActiveBadge();
     renderCurrentSiteProfiles();
     renderAllSitesList();
-    showToast('📥 备份文件导入成功！');
+    showToast('备份文件导入成功');
   } catch (err) {
     console.error('Import error:', err);
-    showToast('❌ 导入失败: ' + err.message);
+    showToast('导入失败: ' + err.message);
   } finally {
     el.fileImport.value = '';
   }
@@ -1254,14 +1254,14 @@ async function handleFileImport(e) {
 function handleWipeAllConfirm() {
   openConfirmModal(
     '清空全部插件数据',
-    '⚠️ 确定要彻底清空本插件保存的所有站点、所有账号凭据吗？该操作不可逆，强烈建议在清空前先导出备份！',
+    '确定要彻底清空本插件保存的所有站点、所有账号凭据吗？该操作不可逆，强烈建议在清空前先导出备份。',
     async () => {
       appData = { profiles: {}, activeProfiles: {} };
       await saveData();
       updateActiveBadge();
       renderCurrentSiteProfiles();
       renderAllSitesList();
-      showToast('🧹 已清空所有本地保存的会话数据');
+      showToast('已清空所有本地保存的会话数据');
     }
   );
 }
@@ -1297,7 +1297,7 @@ function openConfirmModal(title, message, onOk) {
         await action();
       } catch (err) {
         console.error('Confirm action execution error:', err);
-        showToast('❌ 执行失败: ' + err.message);
+        showToast('执行失败: ' + err.message);
       }
     }
   };

@@ -14,13 +14,16 @@
         <img src="icons/icon32.png" alt="logo" class="brand-icon">
         <div class="brand-text">
           <span class="brand-title">SessionSwitch</span>
-          <span id="sync-status-badge" class="sync-badge" title="跨Profile本地自动同步已就绪">☁️ 自动同步</span>
+          <span id="sync-status-badge" class="sync-badge" title="跨 Profile 本地自动同步已就绪">
+            <span class="sync-dot"></span>
+            <span class="sync-text">自动同步</span>
+          </span>
         </div>
       </div>
       <nav class="nav-tabs">
         <button class="nav-tab active" data-tab="current">当前站点</button>
         <button class="nav-tab" data-tab="all">全部站点</button>
-        <button class="nav-tab" data-tab="backup">备份/导出</button>
+        <button class="nav-tab" data-tab="backup">备份管理</button>
       </nav>
     </header>
 
@@ -47,13 +50,13 @@
         <!-- Quick Toolbar -->
         <div class="toolbar-wrap">
           <div class="toolbar-primary-row">
-            <button id="btn-save-current" class="btn btn-primary" title="将当前网页已登录的账号状态保存进插件">
+            <button id="btn-save-current" class="btn btn-primary" title="保存当前网页已登录的账号状态">
               <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
               </svg>
               保存当前账号
             </button>
-            <button id="btn-add-next" class="btn btn-action-brand" title="清除当前登录凭证并刷新，以便您在网页上登录下一个账号并保存">
+            <button id="btn-add-next" class="btn btn-action-brand" title="清除当前登录凭证并刷新网页，录入下一个账号">
               <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
               </svg>
@@ -61,13 +64,13 @@
             </button>
           </div>
           <div class="toolbar-secondary-row">
-            <button id="btn-clear-current" class="btn btn-secondary btn-sm" title="深度清空该站及关联 SSO 的所有登录凭证并刷新网页">
+            <button id="btn-clear-current" class="btn btn-secondary btn-sm" title="深度清空当前站点及关联单点登录票据并刷新网页">
               <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" />
               </svg>
               深度注销
             </button>
-            <button id="btn-reload-tab" class="btn btn-secondary btn-sm" title="重新加载当前标签页">
+            <button id="btn-reload-tab" class="btn btn-secondary btn-sm" title="重新加载当前页面">
               <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
               </svg>
@@ -78,12 +81,20 @@
 
         <!-- Onboarding / Guide Banner -->
         <div id="onboarding-banner" class="guide-banner hidden">
-          <div class="guide-banner-icon">✨</div>
-          <div class="guide-banner-content">
-            <div class="guide-title">已清空登录态（新账号录入中）</div>
-            <div class="guide-desc">请在网页中输入下一个账号登录，登录成功后点击上方的<strong>「保存当前账号」</strong>即可收录！</div>
+          <div class="guide-banner-icon-wrap">
+            <svg class="guide-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+            </svg>
           </div>
-          <button id="btn-close-guide" class="guide-close-btn" title="关闭提示">&times;</button>
+          <div class="guide-banner-content">
+            <div class="guide-title">已清空当前登录（新账号录入中）</div>
+            <div class="guide-desc">请在网页中登录新账号，登录完成后点击上方的<strong>「保存当前账号」</strong>即可收录。</div>
+          </div>
+          <button id="btn-close-guide" class="guide-close-btn" title="关闭提示">
+            <svg class="mini-svg-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
 
         <!-- Unsupported Page Notice -->
@@ -93,13 +104,13 @@
           </svg>
           <div class="alert-content">
             <div class="alert-title">当前页面不支持会话管理</div>
-            <div class="alert-desc">浏览器内置页面或本地文件无法读取 Cookie 与 Storage。请在任意正常网址上打开本插件。</div>
+            <div class="alert-desc">浏览器内置系统页面或本地文件无法访问 Cookie 与 Storage，请在正常网址中打开。</div>
           </div>
         </div>
 
         <!-- Profile List Header -->
         <div class="section-title-bar">
-          <span class="section-title">已保存的账号列表</span>
+          <span class="section-title">已保存账号</span>
           <span class="section-count" id="profile-count">0 个账号</span>
         </div>
 
@@ -110,9 +121,13 @@
 
         <!-- Empty State -->
         <div id="profile-empty" class="empty-state hidden">
-          <div class="empty-icon-box">👤</div>
-          <div class="empty-title">该站点暂无保存的账号</div>
-          <div class="empty-desc">登录您的网站账号后，点击上方「保存当前账号」即可录入一份会话凭据。</div>
+          <div class="empty-icon-wrap">
+            <svg class="empty-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div class="empty-title">当前站点暂无保存的账号</div>
+          <div class="empty-desc">在当前网页正常登录后，点击上方「保存当前账号」即可录入一份会话凭据。</div>
         </div>
       </section>
 
@@ -122,15 +137,19 @@
           <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
           </svg>
-          <input type="text" id="all-sites-search" placeholder="搜索已保存的域名或账号..." class="search-input">
+          <input type="text" id="all-sites-search" placeholder="搜索已保存的域名或账号名称..." class="search-input">
         </div>
         <div id="all-sites-list" class="all-sites-list">
           <!-- Dynamically populated -->
         </div>
         <div id="all-sites-empty" class="empty-state hidden">
-          <div class="empty-icon-box">🌐</div>
+          <div class="empty-icon-wrap">
+            <svg class="empty-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+          </div>
           <div class="empty-title">暂未在任何站点保存账号</div>
-          <div class="empty-desc">在您访问的网站中打开插件即可随时保存多份登录状态。</div>
+          <div class="empty-desc">访问任意网站并登录后，打开本插件即可随时保存并管理多个登录会话。</div>
         </div>
       </section>
 
@@ -138,30 +157,30 @@
       <section id="view-backup" class="tab-view">
         <div class="backup-card">
           <div class="backup-header">
-            <div class="backup-title">📤 导出数据备份</div>
-            <div class="backup-desc">将所有站点保存的账号凭证（Cookie 与 Storage）导出为 JSON 文件。</div>
+            <div class="backup-title">导出数据备份</div>
+            <div class="backup-desc">将所有站点保存的账号凭证（Cookie 与 Storage）完整导出为 JSON 文件。</div>
           </div>
           <button id="btn-export-all" class="btn btn-outline w-full">
             <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
-            导出所有账号凭证 (JSON)
+            导出全部账号数据 (JSON)
           </button>
         </div>
 
         <div class="backup-card">
           <div class="backup-header">
-            <div class="backup-title">📥 导入数据备份</div>
-            <div class="backup-desc">选择之前导出的 JSON 备份文件以恢复账号。</div>
+            <div class="backup-title">导入数据备份</div>
+            <div class="backup-desc">选择先前导出的 JSON 备份文件恢复账号凭据。</div>
           </div>
           <div class="import-mode-selector">
             <label class="radio-label">
               <input type="radio" name="import-mode" value="merge" checked>
-              <span>合并模式（保留现有，添加新账号）</span>
+              <span>增量合并（保留现有记录，添加新账号）</span>
             </label>
             <label class="radio-label">
               <input type="radio" name="import-mode" value="overwrite">
-              <span>覆盖模式（清空全部现有数据并导入）</span>
+              <span>完全覆盖（清空现有数据后导入）</span>
             </label>
           </div>
           <input type="file" id="file-import" accept=".json" style="display: none;">
@@ -169,23 +188,25 @@
             <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
             </svg>
-            选择 JSON 备份文件并导入
+            选择备份文件导入
           </button>
         </div>
 
         <div class="backup-card danger-zone">
           <div class="backup-header">
-            <div class="backup-title text-danger">⚠️ 危险操作</div>
-            <div class="backup-desc">清空本插件在本地保存的所有站点账号数据。该操作不可撤销！</div>
+            <div class="backup-title text-danger">危险区域</div>
+            <div class="backup-desc">清空本插件在本地保存的所有站点及账号数据。此操作不可逆。</div>
           </div>
           <button id="btn-wipe-all" class="btn btn-danger-outline w-full">
-            清空所有插件本地存储
+            清空所有本地数据
           </button>
         </div>
 
         <div class="security-tip">
-          <strong>🔒 隐私与安全性保障：</strong>
-          所有会话 Cookie 与 Storage 数据仅保存在您的本地浏览器中，绝不会上传至任何远程服务器或第三方接口。导出的备份文件包含敏感登录凭据，请妥善保管。
+          <div class="security-tip-title">本地存储与安全说明</div>
+          <div class="security-tip-text">
+            所有会话 Cookie 与 Storage 数据仅保存在本地设备中（~/.sessionswitch/shared_sessions.json），绝不上传至任何外部服务器。导出的备份文件包含登录凭据，请妥善保管。
+          </div>
         </div>
       </section>
     </main>
@@ -195,20 +216,24 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3 id="modal-title" class="modal-title">保存新账号</h3>
-          <button id="modal-close" class="modal-close-btn">&times;</button>
+          <button id="modal-close" class="modal-close-btn" aria-label="关闭">
+            <svg class="mini-svg-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label" for="input-profile-name">账号备注名称 <span class="required">*</span></label>
-            <input type="text" id="input-profile-name" class="form-input" placeholder="例如：主号 / 测试账号A / 个人号" autofocus>
+            <label class="form-label" for="input-profile-name">账号名称 <span class="required">*</span></label>
+            <input type="text" id="input-profile-name" class="form-input" placeholder="例如：主号 / 测试账号 / 个人号" autofocus>
           </div>
           <div class="form-group">
-            <label class="form-label" for="input-profile-note">账号备忘信息（可选）</label>
-            <input type="text" id="input-profile-note" class="form-input" placeholder="例如：admin@company.com / 到期日等">
+            <label class="form-label" for="input-profile-note">备忘说明（可选）</label>
+            <input type="text" id="input-profile-note" class="form-input" placeholder="例如：学号 / 部门 / 备注信息">
           </div>
           <div class="captured-preview" id="captured-preview">
             <div class="preview-item">
-              <span class="preview-label">Cookie 捕获:</span>
+              <span class="preview-label">Cookie 凭据:</span>
               <span class="preview-val" id="preview-cookie-count">-- 项</span>
             </div>
             <div class="preview-item">
@@ -233,14 +258,18 @@
       <div class="modal-card modal-card-sm">
         <div class="modal-header">
           <h3 id="confirm-title" class="modal-title">确认操作</h3>
-          <button id="confirm-close" class="modal-close-btn">&times;</button>
+          <button id="confirm-close" class="modal-close-btn" aria-label="关闭">
+            <svg class="mini-svg-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
         <div class="modal-body">
           <p id="confirm-message" class="confirm-message">确定要执行此操作吗？</p>
         </div>
         <div class="modal-footer">
           <button id="btn-confirm-cancel" class="btn btn-secondary">取消</button>
-          <button id="btn-confirm-ok" class="btn btn-danger">确认</button>
+          <button id="btn-confirm-ok" class="btn btn-danger">确认执行</button>
         </div>
       </div>
     </div>
