@@ -82,8 +82,13 @@ const el = {
 
   // Toast
   toast: document.getElementById('toast'),
-  toastMessage: document.getElementById('toast-message')
+  toastMessage: document.getElementById('toast-message'),
+
+  // Sync Badge
+  syncBadge: document.getElementById('sync-status-badge')
 };
+
+const SYNC_SERVER_URL = 'http://127.0.0.1:49152/api/sessions';
 
 // ==========================================
 // Initialization
@@ -96,7 +101,95 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderAllSitesList();
 });
 
-// Load persistent data from chrome.storage.local
+// Deep merge remote data into local state
+function deepMergeAppData(target, incoming) {
+  if (!incoming || !incoming.profiles) return target;
+  if (!target.profiles) target.profiles = {};
+  if (!target.activeProfiles) target.activeProfiles = {};
+
+  for (const [domain, list] of Object.entries(incoming.profiles)) {
+    if (!Array.isArray(list)) continue;
+    if (!target.profiles[domain]) {
+      target.profiles[domain] = [];
+    }
+
+    for (const inProf of list) {
+      if (!inProf || !inProf.id) continue;
+      const idx = target.profiles[domain].findIndex(
+        p => p.id === inProf.id || (p.name === inProf.name && p.createdAt === inProf.createdAt)
+      );
+
+      if (idx >= 0) {
+        if ((inProf.updatedAt || 0) >= (target.profiles[domain][idx].updatedAt || 0)) {
+          target.profiles[domain][idx] = inProf;
+        }
+      } else {
+        target.profiles[domain].push(inProf);
+      }
+    }
+  }
+
+  if (incoming.activeProfiles) {
+    for (const [domain, id] of Object.entries(incoming.activeProfiles)) {
+      if (!target.activeProfiles[domain] && id) {
+        target.activeProfiles[domain] = id;
+      }
+    }
+  }
+  return target;
+}
+
+// Synchronize with local background server
+async function syncWithServer() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1200);
+
+    const res = await fetch(SYNC_SERVER_URL, { signal: controller.signal });
+    clearTimeout(timer);
+
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success && json.data) {
+        const remoteData = json.data;
+        deepMergeAppData(appData, remoteData);
+        await chrome.storage.local.set({ [STORAGE_KEY]: appData });
+        pushToServer(appData);
+
+        if (el.syncBadge) {
+          el.syncBadge.className = 'sync-badge';
+          el.syncBadge.textContent = '☁️ 自动同步';
+          el.syncBadge.title = '已连接到本地共享服务 (127.0.0.1:49152)，所有 Chrome Profile 自动实时互通';
+        }
+        return true;
+      }
+    }
+  } catch (err) {
+    if (el.syncBadge) {
+      el.syncBadge.className = 'sync-badge offline';
+      el.syncBadge.textContent = '💻 本地模式';
+      el.syncBadge.title = '未连接到共享服务，当前使用 Profile 独立存储';
+    }
+  }
+  return false;
+}
+
+// Asynchronously push updates to local sync server
+async function pushToServer(data) {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2000);
+    await fetch(SYNC_SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: data }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+  } catch (e) {}
+}
+
+// Load persistent data
 async function loadData() {
   try {
     const res = await chrome.storage.local.get(STORAGE_KEY);
@@ -108,6 +201,9 @@ async function loadData() {
   } catch (err) {
     console.error('Error loading data:', err);
   }
+
+  // Attempt automatic sync with local server
+  await syncWithServer();
 }
 
 // Save persistent data
@@ -118,6 +214,9 @@ async function saveData() {
     console.error('Error saving data:', err);
     showToast('❌ 保存配置失败: ' + err.message);
   }
+
+  // Auto push to background server for cross-profile sharing
+  pushToServer(appData);
 }
 
 // Initialize active tab info

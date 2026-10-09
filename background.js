@@ -4,6 +4,37 @@
  */
 
 const STORAGE_KEY = 'session_switch_data_v1';
+const SYNC_SERVER_URL = 'http://127.0.0.1:49152/api/sessions';
+
+// Check if background server has updates
+let lastChecked = 0;
+async function backgroundSync() {
+  const now = Date.now();
+  // Throttle background check to once every 3 seconds
+  if (now - lastChecked < 3000) return;
+  lastChecked = now;
+
+  try {
+    const res = await fetch(SYNC_SERVER_URL);
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success && json.data) {
+        const remote = json.data;
+        const local = await chrome.storage.local.get(STORAGE_KEY);
+        const localData = local[STORAGE_KEY] || { profiles: {}, activeProfiles: {} };
+
+        if (remote.lastModified && remote.lastModified !== localData.lastSyncedAt) {
+          const merged = {
+            ...localData,
+            profiles: remote.profiles || {},
+            lastSyncedAt: remote.lastModified
+          };
+          await chrome.storage.local.set({ [STORAGE_KEY]: merged });
+        }
+      }
+    }
+  } catch (e) {}
+}
 
 // Update icon badge when active tab changes or completes loading
 async function updateBadgeForTab(tabId, url) {
@@ -30,14 +61,16 @@ async function updateBadgeForTab(tabId, url) {
 }
 
 // Tab updated
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
+    await backgroundSync();
     updateBadgeForTab(tabId, tab.url);
   }
 });
 
 // Tab switched
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  await backgroundSync();
   try {
     const tab = await chrome.tabs.get(activeInfo.tabId);
     if (tab && tab.url) {

@@ -70,7 +70,16 @@
 ### 4. 更新凭证
 - 若某个账号在长时间使用后换绑了信息或刷新了登录态，在登录状态下点击该账号卡片上的 **「更新」** 按钮即可一键覆盖更新。
 
-### 5. 导入与导出
+### 5. 跨 Chrome Profile 自动实时共享（全自动无感）
+- 插件现已标配 **本地跨 Profile 实时同步中间件**。
+- 数据在本地统一存放在 `~/.sessionswitch/shared_sessions.json`。
+- **你在 Profile A 中保存或更新的账号，打开 Profile B 或 Profile 6 时插件会自动实时双向同步，无需任何手动导出或导入！**
+- 本地守护进程通过 macOS LaunchAgent 在后台静默运行（仅监听本地 `127.0.0.1:49152`，内存占用极小约 15MB，无任何外部网络暴露）。
+- 管理脚本：
+  - `./install_service.sh`：自动配置并启动后台守护服务（已自动为你安装并运行）。
+  - `./uninstall_service.sh`：一键停止并卸载后台服务。
+
+### 6. 手动备份与跨设备迁移
 - 点击顶部 **「备份/导出」** 标签：
   - **导出所有账号凭证**：生成包含所有站点账号的 JSON 备份。
   - **选择备份文件导入**：在更换电脑或重装浏览器后一键恢复全部账号。
@@ -81,17 +90,16 @@
 
 ```
 /Users/aruix/Documents/sessions/
-├── manifest.json       # Chrome 扩展配置文件 (Manifest V3)
-├── background.js       # 后台服务脚本（管理角标计数与状态监听）
-├── popup.html          # 弹窗主界面结构
-├── popup.css           # 弹窗视觉样式与交互动效
-├── popup.js            # 核心控制逻辑（Cookie/Storage读取写入、切换、备份）
-├── icons/              # 扩展程序多尺寸高清图标 (16/32/48/128)
-│   ├── icon16.png
-│   ├── icon32.png
-│   ├── icon48.png
-│   └── icon128.png
-└── README.md           # 本说明文档
+├── manifest.json         # Chrome 扩展配置文件 (Manifest V3)
+├── background.js         # 后台服务脚本（管理角标计数、后台跨Profile更新）
+├── popup.html            # 弹窗主界面结构（含云同步状态指示徽章）
+├── popup.css             # 弹窗视觉样式与交互动效
+├── popup.js              # 核心控制逻辑（双向合并同步、Cookie/Storage写入）
+├── sync_server.js        # 本地轻量跨Profile同步守护服务 (127.0.0.1:49152)
+├── install_service.sh    # macOS LaunchAgent 自动化开机守护安装脚本
+├── uninstall_service.sh  # 服务卸载脚本
+├── icons/                # 扩展程序多尺寸高清图标 (16/32/48/128)
+└── README.md             # 本说明文档
 ```
 
 ---

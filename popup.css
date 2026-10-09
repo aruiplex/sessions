@@ -94,6 +94,27 @@ body {
   border-radius: 10px;
 }
 
+.sync-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #047857;
+  background: #d1fae5;
+  border: 1px solid #a7f3d0;
+  padding: 1px 6px;
+  border-radius: 10px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.2s ease;
+}
+
+.sync-badge.offline {
+  color: var(--text-muted);
+  background: #f1f5f9;
+  border-color: var(--border);
+}
+
 /* Navigation Tabs */
 .nav-tabs {
   display: flex;
