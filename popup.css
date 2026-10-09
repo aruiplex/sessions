@@ -534,6 +534,20 @@ body {
   flex-shrink: 0;
 }
 
+.affiliated-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  padding: 1px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .active-dot {
   width: 6px;
   height: 6px;

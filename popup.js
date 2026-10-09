@@ -219,6 +219,60 @@ async function saveData() {
   pushToServer(appData);
 }
 
+// Domain clustering & ecosystem association
+const DOMAIN_CLUSTERS = [
+  // XJTLU Learning Mall ecosystem (Portal, Core LMS, Premium, SSO)
+  ['learningmall.cn', 'www.learningmall.cn', 'core.xjtlu.edu.cn', 'premium.learningmall.cn', 'learningmall.xjtlu.edu.cn']
+];
+
+function getAssociatedDomains(domain) {
+  if (!domain) return [];
+  const result = new Set();
+  const lower = domain.toLowerCase();
+  const clean = lower.replace(/^www\./, '');
+  result.add(lower);
+  result.add(clean);
+  result.add('www.' + clean);
+
+  // Cluster matching
+  for (const cluster of DOMAIN_CLUSTERS) {
+    if (cluster.some(d => d.toLowerCase() === lower || d.toLowerCase() === clean)) {
+      for (const d of cluster) result.add(d.toLowerCase());
+    }
+  }
+
+  // Parent / subdomain matching
+  const parts = clean.split('.');
+  if (parts.length > 2) {
+    const parentDomain = parts.slice(1).join('.');
+    result.add(parentDomain);
+  }
+
+  return Array.from(result);
+}
+
+function getMatchedProfiles(domain) {
+  if (!domain) return [];
+  const associated = getAssociatedDomains(domain);
+  const matched = [];
+  const seenIds = new Set();
+  const cleanCurrent = domain.toLowerCase().replace(/^www\./, '');
+
+  for (const d of associated) {
+    const list = appData.profiles[d] || [];
+    for (const p of list) {
+      if (!p || !p.id) continue;
+      if (!seenIds.has(p.id)) {
+        seenIds.add(p.id);
+        const cleanProfileDomain = (p.domain || d).toLowerCase().replace(/^www\./, '');
+        const isAffiliated = cleanProfileDomain !== cleanCurrent;
+        matched.push({ ...p, isAffiliated, sourceDomain: p.domain || d });
+      }
+    }
+  }
+  return matched;
+}
+
 // Initialize active tab info
 async function initCurrentTab() {
   try {
@@ -280,9 +334,19 @@ function markUnsupported(message) {
 }
 
 function updateActiveBadge() {
-  const activeId = appData.activeProfiles[currentDomain];
-  const profiles = appData.profiles[currentDomain] || [];
-  const activeProfile = profiles.find(p => p.id === activeId);
+  const matched = getMatchedProfiles(currentDomain);
+  let activeId = appData.activeProfiles[currentDomain];
+  if (!activeId) {
+    const associated = getAssociatedDomains(currentDomain);
+    for (const d of associated) {
+      if (appData.activeProfiles[d]) {
+        activeId = appData.activeProfiles[d];
+        break;
+      }
+    }
+  }
+
+  const activeProfile = matched.find(p => p.id === activeId);
 
   if (activeProfile) {
     el.activeBadge.className = 'status-badge status-badge-active';
@@ -642,12 +706,15 @@ async function switchProfile(profile) {
 
   showToast('⏳ 正在切换账号，请稍候...', 3000);
 
-  // 1. Wipe current credentials
+  // 1. Wipe current credentials for current tab and target profile domain
   await clearDomainSession(currentUrl, currentDomain, currentTab.id);
+  if (profile.domain && profile.domain.toLowerCase() !== currentDomain.toLowerCase()) {
+    await clearDomainSession(profile.originUrl || ('https://' + profile.domain), profile.domain, currentTab.id);
+  }
 
   // 2. Inject target profile cookies
   if (profile.cookies && profile.cookies.length > 0) {
-    await restoreCookies(profile.cookies, currentDomain);
+    await restoreCookies(profile.cookies, profile.domain || currentDomain);
   }
 
   // 3. Inject target profile storage
@@ -655,10 +722,20 @@ async function switchProfile(profile) {
 
   // 4. Update active tracking
   appData.activeProfiles[currentDomain] = profile.id;
+  if (profile.domain) {
+    appData.activeProfiles[profile.domain] = profile.id;
+  }
   await saveData();
 
-  // 5. Reload active tab
-  chrome.tabs.reload(currentTab.id, { bypassCache: true });
+  // 5. Reload active tab or navigate to target profile originUrl if on an affiliated portal
+  const cleanCurrent = currentDomain.toLowerCase().replace(/^www\./, '');
+  const cleanProfile = (profile.domain || '').toLowerCase().replace(/^www\./, '');
+
+  if (profile.originUrl && cleanCurrent !== cleanProfile) {
+    chrome.tabs.update(currentTab.id, { url: profile.originUrl });
+  } else {
+    chrome.tabs.reload(currentTab.id, { bypassCache: true });
+  }
 
   updateActiveBadge();
   renderCurrentSiteProfiles();
@@ -920,10 +997,11 @@ function renderCurrentSiteProfiles() {
     return;
   }
 
-  const profiles = appData.profiles[currentDomain] || [];
+  const profiles = getMatchedProfiles(currentDomain);
   const activeId = appData.activeProfiles[currentDomain];
 
-  el.profileCount.textContent = `${profiles.length} 个账号`;
+  const hasAffiliated = profiles.some(p => p.isAffiliated);
+  el.profileCount.textContent = `${profiles.length} 个账号${hasAffiliated ? ' (含关联站点)' : ''}`;
 
   if (profiles.length === 0) {
     el.profileList.innerHTML = '';
@@ -935,7 +1013,7 @@ function renderCurrentSiteProfiles() {
   el.profileList.innerHTML = '';
 
   profiles.forEach(profile => {
-    const isActive = profile.id === activeId;
+    const isActive = profile.id === activeId || (profile.domain && appData.activeProfiles[profile.domain] === profile.id);
     const card = document.createElement('div');
     card.className = `profile-card ${isActive ? 'active-card' : ''}`;
 
@@ -952,6 +1030,11 @@ function renderCurrentSiteProfiles() {
           ${isActive ? `
             <span class="active-tag">
               <span class="active-dot"></span>使用中
+            </span>
+          ` : ''}
+          ${profile.isAffiliated ? `
+            <span class="affiliated-tag" title="此账号是在关联系统 ${escapeHtml(profile.sourceDomain)} 中保存的，可直接在此处一键切换">
+              🔗 ${escapeHtml(profile.sourceDomain)}
             </span>
           ` : ''}
         </div>
