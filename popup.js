@@ -732,14 +732,25 @@ function handlePrepareAddNextAccount() {
     `将彻底清空「${currentDomain}」当前的登录状态（包括 Cookie、LocalStorage 及关联统一认证票据）并自动刷新网页。\n\n网页刷新后，请在网页中直接登录您的下一个账号；登录成功后，再次打开本插件点击「保存当前账号」即可录入。确定继续？`,
     async () => {
       showToast('⏳ 正在清空当前会话并刷新网页...', 2000);
-      await clearDomainSession(currentUrl, currentDomain, currentTab.id);
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabToUse = (tabs && tabs[0]) ? tabs[0] : currentTab;
+      const tabId = tabToUse ? tabToUse.id : null;
+      const urlToUse = (tabToUse && tabToUse.url) ? tabToUse.url : currentUrl;
+
+      await clearDomainSession(urlToUse, currentDomain, tabId);
 
       if (!appData.onboardingDomains) appData.onboardingDomains = {};
       appData.onboardingDomains[currentDomain] = true;
       delete appData.activeProfiles[currentDomain];
       await saveData();
 
-      chrome.tabs.reload(currentTab.id, { bypassCache: true });
+      if (tabId) {
+        try {
+          await chrome.tabs.reload(tabId, { bypassCache: true });
+        } catch (e) {
+          console.warn('Reload tab error:', e);
+        }
+      }
       updateActiveBadge();
       renderCurrentSiteProfiles();
       if (el.onboardingBanner) {
@@ -756,14 +767,25 @@ function handleClearSessionConfirm() {
     '深度注销登录',
     `确定要清空「${currentDomain}」的所有当前 Cookie、本地 Storage 以及关联单点登录凭据并刷新页面吗？这将使网站回到完全未登录状态。`,
     async () => {
-      await clearDomainSession(currentUrl, currentDomain, currentTab.id);
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      const tabToUse = (tabs && tabs[0]) ? tabs[0] : currentTab;
+      const tabId = tabToUse ? tabToUse.id : null;
+      const urlToUse = (tabToUse && tabToUse.url) ? tabToUse.url : currentUrl;
+
+      await clearDomainSession(urlToUse, currentDomain, tabId);
       delete appData.activeProfiles[currentDomain];
       if (appData.onboardingDomains) {
         delete appData.onboardingDomains[currentDomain];
       }
       await saveData();
 
-      chrome.tabs.reload(currentTab.id, { bypassCache: true });
+      if (tabId) {
+        try {
+          await chrome.tabs.reload(tabId, { bypassCache: true });
+        } catch (e) {
+          console.warn('Reload tab error:', e);
+        }
+      }
       updateActiveBadge();
       renderCurrentSiteProfiles();
       if (el.onboardingBanner) {
@@ -1086,10 +1108,15 @@ function openConfirmModal(title, message, onOk) {
   el.confirmModal.classList.remove('hidden');
 
   el.btnConfirmOk.onclick = async () => {
+    const action = confirmCallback;
     closeConfirmModal();
-    if (confirmCallback) {
-      await confirmCallback();
-      confirmCallback = null;
+    if (action) {
+      try {
+        await action();
+      } catch (err) {
+        console.error('Confirm action execution error:', err);
+        showToast('❌ 执行失败: ' + err.message);
+      }
     }
   };
 }
