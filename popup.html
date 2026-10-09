@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SessionSwitch - 多账号登录切换器</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <img src="icons/icon32.png" alt="logo" class="brand-icon">
+        <div class="brand-text">
+          <span class="brand-title">SessionSwitch</span>
+          <span class="brand-badge">v1.0</span>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="current">当前站点</button>
+        <button class="nav-tab" data-tab="all">全部站点</button>
+        <button class="nav-tab" data-tab="backup">备份/导出</button>
+      </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- TAB 1: Current Site -->
+      <section id="view-current" class="tab-view active">
+        <!-- Site Info Header Card -->
+        <div class="site-card">
+          <div class="site-info">
+            <div class="site-favicon-wrap">
+              <img id="site-favicon" src="icons/icon16.png" alt="favicon" class="site-favicon">
+            </div>
+            <div class="site-meta">
+              <div class="site-domain" id="site-domain">正在检测站点...</div>
+              <div class="site-url" id="site-url" title="">-</div>
+            </div>
+          </div>
+          <div class="site-status" id="site-status-container">
+            <span class="status-badge status-badge-idle" id="active-profile-badge">未选择档案</span>
+          </div>
+        </div>
+
+        <!-- Quick Toolbar -->
+        <div class="toolbar">
+          <button id="btn-save-current" class="btn btn-primary">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            保存当前账号
+          </button>
+          <button id="btn-clear-current" class="btn btn-secondary" title="清空该站的所有登录凭证并刷新，回到未登录状态">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            注销退出
+          </button>
+          <button id="btn-reload-tab" class="btn btn-icon-only" title="重新加载当前标签页">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Unsupported Page Notice -->
+        <div id="unsupported-banner" class="alert-banner hidden">
+          <svg class="alert-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <div class="alert-content">
+            <div class="alert-title">当前页面不支持会话管理</div>
+            <div class="alert-desc">浏览器内置页面或本地文件无法读取 Cookie 与 Storage。请在任意正常网址上打开本插件。</div>
+          </div>
+        </div>
+
+        <!-- Profile List Header -->
+        <div class="section-title-bar">
+          <span class="section-title">已保存的账号列表</span>
+          <span class="section-count" id="profile-count">0 个账号</span>
+        </div>
+
+        <!-- Profile List Container -->
+        <div id="profile-list" class="profile-list">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="profile-empty" class="empty-state hidden">
+          <div class="empty-icon-box">👤</div>
+          <div class="empty-title">该站点暂无保存的账号</div>
+          <div class="empty-desc">登录您的网站账号后，点击上方「保存当前账号」即可录入一份会话凭据。</div>
+        </div>
+      </section>
+
+      <!-- TAB 2: All Sites -->
+      <section id="view-all" class="tab-view">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+          </svg>
+          <input type="text" id="all-sites-search" placeholder="搜索已保存的域名或账号..." class="search-input">
+        </div>
+        <div id="all-sites-list" class="all-sites-list">
+          <!-- Dynamically populated -->
+        </div>
+        <div id="all-sites-empty" class="empty-state hidden">
+          <div class="empty-icon-box">🌐</div>
+          <div class="empty-title">暂未在任何站点保存账号</div>
+          <div class="empty-desc">在您访问的网站中打开插件即可随时保存多份登录状态。</div>
+        </div>
+      </section>
+
+      <!-- TAB 3: Backup & Restore -->
+      <section id="view-backup" class="tab-view">
+        <div class="backup-card">
+          <div class="backup-header">
+            <div class="backup-title">📤 导出数据备份</div>
+            <div class="backup-desc">将所有站点保存的账号凭证（Cookie 与 Storage）导出为 JSON 文件。</div>
+          </div>
+          <button id="btn-export-all" class="btn btn-outline w-full">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            导出所有账号凭证 (JSON)
+          </button>
+        </div>
+
+        <div class="backup-card">
+          <div class="backup-header">
+            <div class="backup-title">📥 导入数据备份</div>
+            <div class="backup-desc">选择之前导出的 JSON 备份文件以恢复账号。</div>
+          </div>
+          <div class="import-mode-selector">
+            <label class="radio-label">
+              <input type="radio" name="import-mode" value="merge" checked>
+              <span>合并模式（保留现有，添加新账号）</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="import-mode" value="overwrite">
+              <span>覆盖模式（清空全部现有数据并导入）</span>
+            </label>
+          </div>
+          <input type="file" id="file-import" accept=".json" style="display: none;">
+          <button id="btn-trigger-import" class="btn btn-outline w-full">
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+            选择 JSON 备份文件并导入
+          </button>
+        </div>
+
+        <div class="backup-card danger-zone">
+          <div class="backup-header">
+            <div class="backup-title text-danger">⚠️ 危险操作</div>
+            <div class="backup-desc">清空本插件在本地保存的所有站点账号数据。该操作不可撤销！</div>
+          </div>
+          <button id="btn-wipe-all" class="btn btn-danger-outline w-full">
+            清空所有插件本地存储
+          </button>
+        </div>
+
+        <div class="security-tip">
+          <strong>🔒 隐私与安全性保障：</strong>
+          所有会话 Cookie 与 Storage 数据仅保存在您的本地浏览器中，绝不会上传至任何远程服务器或第三方接口。导出的备份文件包含敏感登录凭据，请妥善保管。
+        </div>
+      </section>
+    </main>
+
+    <!-- Save / Edit Modal -->
+    <div id="modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modal-title" class="modal-title">保存新账号</h3>
+          <button id="modal-close" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="input-profile-name">账号备注名称 <span class="required">*</span></label>
+            <input type="text" id="input-profile-name" class="form-input" placeholder="例如：主号 / 测试账号A / 个人号" autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-profile-note">账号备忘信息（可选）</label>
+            <input type="text" id="input-profile-note" class="form-input" placeholder="例如：admin@company.com / 到期日等">
+          </div>
+          <div class="captured-preview" id="captured-preview">
+            <div class="preview-item">
+              <span class="preview-label">Cookie 捕获:</span>
+              <span class="preview-val" id="preview-cookie-count">-- 项</span>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label">LocalStorage:</span>
+              <span class="preview-val" id="preview-local-count">-- 项</span>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label">SessionStorage:</span>
+              <span class="preview-val" id="preview-session-count">-- 项</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-modal-cancel" class="btn btn-secondary">取消</button>
+          <button id="btn-modal-confirm" class="btn btn-primary">确认保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-modal" class="modal-backdrop hidden">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h3 id="confirm-title" class="modal-title">确认操作</h3>
+          <button id="confirm-close" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="confirm-message" class="confirm-message">确定要执行此操作吗？</p>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-confirm-cancel" class="btn btn-secondary">取消</button>
+          <button id="btn-confirm-ok" class="btn btn-danger">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-message"></span>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

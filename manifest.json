@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "SessionSwitch - 多账号登录会话切换器",
+  "version": "1.0.0",
+  "description": "支持在任意网站一键保存、快速切换、备份多份登录凭证（完整支持 Cookie、LocalStorage 与 SessionStorage）。",
+  "permissions": [
+    "cookies",
+    "storage",
+    "scripting",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SessionSwitch 会话切换",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
