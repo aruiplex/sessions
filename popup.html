@@ -45,24 +45,45 @@
         </div>
 
         <!-- Quick Toolbar -->
-        <div class="toolbar">
-          <button id="btn-save-current" class="btn btn-primary">
-            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            保存当前账号
-          </button>
-          <button id="btn-clear-current" class="btn btn-secondary" title="清空该站的所有登录凭证并刷新，回到未登录状态">
-            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-            注销退出
-          </button>
-          <button id="btn-reload-tab" class="btn btn-icon-only" title="重新加载当前标签页">
-            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
-            </svg>
-          </button>
+        <div class="toolbar-wrap">
+          <div class="toolbar-primary-row">
+            <button id="btn-save-current" class="btn btn-primary" title="将当前网页已登录的账号状态保存进插件">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+              </svg>
+              保存当前账号
+            </button>
+            <button id="btn-add-next" class="btn btn-action-brand" title="清除当前登录凭证并刷新，以便您在网页上登录下一个账号并保存">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+              </svg>
+              清空并录入新账号
+            </button>
+          </div>
+          <div class="toolbar-secondary-row">
+            <button id="btn-clear-current" class="btn btn-secondary btn-sm" title="深度清空该站及关联 SSO 的所有登录凭证并刷新网页">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              深度注销
+            </button>
+            <button id="btn-reload-tab" class="btn btn-secondary btn-sm" title="重新加载当前标签页">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+              </svg>
+              刷新网页
+            </button>
+          </div>
+        </div>
+
+        <!-- Onboarding / Guide Banner -->
+        <div id="onboarding-banner" class="guide-banner hidden">
+          <div class="guide-banner-icon">✨</div>
+          <div class="guide-banner-content">
+            <div class="guide-title">已清空登录态（新账号录入中）</div>
+            <div class="guide-desc">请在网页中输入下一个账号登录，登录成功后点击上方的<strong>「保存当前账号」</strong>即可收录！</div>
+          </div>
+          <button id="btn-close-guide" class="guide-close-btn" title="关闭提示">&times;</button>
         </div>
 
         <!-- Unsupported Page Notice -->

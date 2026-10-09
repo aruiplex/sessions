@@ -37,8 +37,11 @@ const el = {
 
   // Toolbar
   btnSaveCurrent: document.getElementById('btn-save-current'),
+  btnAddNext: document.getElementById('btn-add-next'),
   btnClearCurrent: document.getElementById('btn-clear-current'),
   btnReloadTab: document.getElementById('btn-reload-tab'),
+  onboardingBanner: document.getElementById('onboarding-banner'),
+  btnCloseGuide: document.getElementById('btn-close-guide'),
 
   // Profile List
   profileCount: document.getElementById('profile-count'),
@@ -151,6 +154,13 @@ async function initCurrentTab() {
     }
 
     updateActiveBadge();
+
+    // Check if domain is in onboarding mode
+    if (appData.onboardingDomains && appData.onboardingDomains[currentDomain]) {
+      el.onboardingBanner.classList.remove('hidden');
+    } else {
+      el.onboardingBanner.classList.add('hidden');
+    }
   } catch (err) {
     console.error('Error inspecting tab:', err);
     markUnsupported('页面初始化失败');
@@ -163,8 +173,10 @@ function markUnsupported(message) {
   el.siteUrl.textContent = message;
   el.unsupportedBanner.classList.remove('hidden');
   el.btnSaveCurrent.disabled = true;
+  if (el.btnAddNext) el.btnAddNext.disabled = true;
   el.btnClearCurrent.disabled = true;
   el.btnSaveCurrent.style.opacity = '0.5';
+  if (el.btnAddNext) el.btnAddNext.style.opacity = '0.5';
   el.btnClearCurrent.style.opacity = '0.5';
 }
 
@@ -207,7 +219,19 @@ function setupEventListeners() {
 
   // Current Site Toolbar
   el.btnSaveCurrent.addEventListener('click', handleOpenSaveModal);
+  if (el.btnAddNext) {
+    el.btnAddNext.addEventListener('click', handlePrepareAddNextAccount);
+  }
   el.btnClearCurrent.addEventListener('click', handleClearSessionConfirm);
+  if (el.btnCloseGuide) {
+    el.btnCloseGuide.addEventListener('click', () => {
+      el.onboardingBanner.classList.add('hidden');
+      if (appData.onboardingDomains) {
+        delete appData.onboardingDomains[currentDomain];
+        saveData();
+      }
+    });
+  }
   el.btnReloadTab.addEventListener('click', () => {
     if (currentTab && currentTab.id) {
       chrome.tabs.reload(currentTab.id);
@@ -350,7 +374,7 @@ async function captureStorage(tabId) {
  * Completely clear cookies & storage for current tab's domain
  */
 async function clearDomainSession(url, domain, tabId) {
-  // 1. Remove all cookies
+  // 1. Remove all cookies for current domain & URL
   try {
     const existingCookies = await captureCookies(url, domain);
     for (const c of existingCookies) {
@@ -369,6 +393,33 @@ async function clearDomainSession(url, domain, tabId) {
         console.warn('Error removing cookie:', c.name, err);
       }
     }
+
+    // Smart SSO clearing for affiliated systems (e.g. learningmall & xjtlu SSO)
+    if (domain.includes('learningmall') || domain.includes('xjtlu.edu.cn')) {
+      const ssoDomains = [
+        'uim.xjtlu.edu.cn',
+        'sso.xjtlu.edu.cn',
+        'learningmall.cn',
+        'www.learningmall.cn',
+        'learningmall.xjtlu.edu.cn',
+        'core.xjtlu.edu.cn'
+      ];
+      for (const sDom of ssoDomains) {
+        try {
+          const sCookies = await chrome.cookies.getAll({ domain: sDom });
+          for (const sc of sCookies) {
+            const proto = sc.secure ? 'https:' : 'http:';
+            const cleanD = (sc.domain || sDom).replace(/^\./, '');
+            const p = sc.path && sc.path.startsWith('/') ? sc.path : '/' + (sc.path || '');
+            await chrome.cookies.remove({
+              url: `${proto}//${cleanD}${p}`,
+              name: sc.name,
+              storeId: sc.storeId
+            });
+          }
+        } catch (e) {}
+      }
+    }
   } catch (err) {
     console.error('Clear cookies failed:', err);
   }
@@ -381,6 +432,15 @@ async function clearDomainSession(url, domain, tabId) {
         func: () => {
           try { localStorage.clear(); } catch (e) {}
           try { sessionStorage.clear(); } catch (e) {}
+          try {
+            if (window.indexedDB && window.indexedDB.databases) {
+              window.indexedDB.databases().then(dbs => {
+                for (const db of dbs) {
+                  if (db.name) window.indexedDB.deleteDatabase(db.name);
+                }
+              }).catch(() => {});
+            }
+          } catch (e) {}
         }
       });
     } catch (err) {
@@ -594,7 +654,14 @@ async function handleConfirmSaveOrEdit() {
     appData.profiles[currentDomain].push(newProfile);
     appData.activeProfiles[currentDomain] = newProfile.id;
 
+    if (appData.onboardingDomains && appData.onboardingDomains[currentDomain]) {
+      delete appData.onboardingDomains[currentDomain];
+    }
+
     await saveData();
+    if (el.onboardingBanner) {
+      el.onboardingBanner.classList.add('hidden');
+    }
     showToast(`✅ 账号「${name}」已保存成功！`);
   }
 
@@ -658,20 +725,51 @@ function handleDeleteProfile(profile) {
   );
 }
 
-function handleClearSessionConfirm() {
+function handlePrepareAddNextAccount() {
   if (!currentSiteValid) return;
   openConfirmModal(
-    '注销退出登录',
-    `确定要清空「${currentDomain}」的所有当前 Cookie 和本地 Storage 并刷新页面吗？这将使网站回到完全未登录状态。`,
+    '清空并准备录入新账号',
+    `将彻底清空「${currentDomain}」当前的登录状态（包括 Cookie、LocalStorage 及关联统一认证票据）并自动刷新网页。\n\n网页刷新后，请在网页中直接登录您的下一个账号；登录成功后，再次打开本插件点击「保存当前账号」即可录入。确定继续？`,
     async () => {
+      showToast('⏳ 正在清空当前会话并刷新网页...', 2000);
       await clearDomainSession(currentUrl, currentDomain, currentTab.id);
+
+      if (!appData.onboardingDomains) appData.onboardingDomains = {};
+      appData.onboardingDomains[currentDomain] = true;
       delete appData.activeProfiles[currentDomain];
       await saveData();
 
       chrome.tabs.reload(currentTab.id, { bypassCache: true });
       updateActiveBadge();
       renderCurrentSiteProfiles();
-      showToast('🧹 已清空当前登录凭证并刷新页面');
+      if (el.onboardingBanner) {
+        el.onboardingBanner.classList.remove('hidden');
+      }
+      showToast('✨ 已清空登录！请在网页中登录新账号后点击「保存当前账号」', 4000);
+    }
+  );
+}
+
+function handleClearSessionConfirm() {
+  if (!currentSiteValid) return;
+  openConfirmModal(
+    '深度注销登录',
+    `确定要清空「${currentDomain}」的所有当前 Cookie、本地 Storage 以及关联单点登录凭据并刷新页面吗？这将使网站回到完全未登录状态。`,
+    async () => {
+      await clearDomainSession(currentUrl, currentDomain, currentTab.id);
+      delete appData.activeProfiles[currentDomain];
+      if (appData.onboardingDomains) {
+        delete appData.onboardingDomains[currentDomain];
+      }
+      await saveData();
+
+      chrome.tabs.reload(currentTab.id, { bypassCache: true });
+      updateActiveBadge();
+      renderCurrentSiteProfiles();
+      if (el.onboardingBanner) {
+        el.onboardingBanner.classList.add('hidden');
+      }
+      showToast('🧹 已深度清空登录凭据并刷新页面');
     }
   );
 }
